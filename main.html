@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD WEB App</title>
+  <style>
+    body {
+      margin: 10px;
+      color: rgb(3, 5, 0);
+      background-color: antiquewhite;
+      font-family: Arial;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      
+    }
+
+    th {
+      border: 2px solid #414040;
+      padding: 8px;
+      text-align: center;
+
+    }
+
+    th {
+      background-color: #f2f2f2;
+      
+    }
+
+    td{
+      background-color: rgb(173, 246, 246);
+      padding: 8px;
+      text-align: center;
+    }
+
+    form {
+      margin-top: 20px;
+    }
+
+    button {
+        width: 6  vw;
+        height: 4vh;
+        border-radius: 0.5rem;
+        border: none;
+        background-color: rgb(198, 61, 61);
+    }
+
+    button:hover {
+        font-weight: 600;
+        box-shadow: 0 0 0.5em 0.1em rgb(131, 131, 131);
+    }
+
+    .add{
+      background-color: rgb(173, 246, 246);
+      text-align: center;
+      width: 50%;
+      margin-left: 380px;
+    }
+    
+
+    
+
+
+  </style>
+</head>
+<body>
+    <div id="d-box">
+        <center>
+            <h1>CRUD WEB APP</h1>
+            
+        </center>
+        <h2>STUDENTS</h2>
+        <table id="studentsTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Index No</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="add">
+          <h2>Add New Student</h2>
+          <form id="addstudentForm">
+              <label for="studentName">Name:</label>
+              <input type="text" id="studentName" name="studentName" required>
+
+              <label for="studentName">Course:</label>
+              <input type="text" id="studentCourse" name="studentCourse" required>
+
+              <label for="studentName">Index No:</label>
+              <input type="text" id="studentIndexno" name="studentIndexno" required><br><br>
+
+              <button type="submit">Add student</button>
+          </form>
+        </div>
+    </div>
+
+
+  
+
+  <script>
+    // page loads
+    document.addEventListener('DOMContentLoaded', fetchstudents);
+
+    //  students display in the table
+    function fetchstudents() {
+      fetch('http://localhost:3000/students')
+        .then(response => response.json())
+        .then(students  => {
+          const studentsTableBody = document.querySelector('#studentsTable tbody');
+          studentsTableBody.innerHTML = '';
+
+          students.forEach(students => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${students.id}</td>
+              <td>${students.name}</td>
+              <td>${students.course}</td>
+              <td>${students.indexNo}</td>
+              <td>
+                <button onclick="editstudent(${students.id})">Edit</button>
+                <button onclick="deletestudent(${students.id})">Delete</button>
+              </td>
+            `;
+            studentsTableBody.appendChild(row);
+          });
+        })
+        .catch(error => console.error('Error fetching students:', error));
+    }
+
+    // Add a new student
+    document.getElementById('addstudentForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const studentName = document.getElementById('studentName').value;
+      const studentCourse = document.getElementById('studentCourse').value;
+      const studentIndexNo = document.getElementById('studentIndexno').value;
+      console.log(studentName);
+      console.log(studentCourse);
+      console.log(studentIndexNo);
+      
+
+
+     
+
+      fetch('http://localhost:3000/students', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+        body: JSON.stringify({name: studentName, course: studentCourse, indexNo: studentIndexNo}),
+        
+        //wrong one
+        // body: JSON.stringify({ course: studentCourse }),
+        // body: JSON.stringify({ indexNo: studentIndexNo }),
+
+        
+      })
+        .then(response => response.json())
+        .then(() => {
+          fetchstudents();
+          document.getElementById('studentName').value = '';
+
+          document.getElementById('studentCourse').value='';
+
+          document.getElementById('studentIndexno').value='';
+
+
+
+
+        })
+        .catch(error => console.error('Error adding student:', error));
+    });
+
+    // Delete an student by ID
+    function deletestudent(studentId) {
+        console.log(studentId);
+      fetch(`http://localhost:3000/students/${studentId}`, {
+        method: 'DELETE',
+        
+      })
+        .then(response => response.json())
+        .then(() => fetchstudents())
+        .catch(error => console.error('Error deleting student:', error));
+    }
+
+    // Edit an student by ID 
+    function editstudent(studentId) {
+      // Prompt the user for new values for each column
+      const newName = prompt("Please Enter New Name:", "");
+      const newCourse = prompt("Please Enter New Course:", "");
+      const newIndexNo = prompt("Please Enter New Index No:", "");
+
+      // Create an object with the updated values
+      const updatedData = {};
+      if (newName) {
+        updatedData.name = newName;
+      }
+      if (newCourse) {
+        updatedData.course = newCourse;
+      }
+      if (newIndexNo) {
+        updatedData.indexNo = newIndexNo;
+      }
+
+      // Check if there are any updates to be made
+      if (Object.keys(updatedData).length === 0) {
+        alert("No updates provided.");
+        return;
+      }
+
+      // Send the updated data to the server
+      fetch(`http://localhost:3000/students/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      })
+        .then(response => response.json())
+        .then(() => fetchstudents())
+        .catch(error => console.error('Error updating student:', error));
+  }
+  </script>
+
+</body>
+</html>
